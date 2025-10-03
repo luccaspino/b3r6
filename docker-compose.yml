@@ -1,0 +1,67 @@
+
+
+services:
+  # Par 1: Flask (Ubuntu) + Redis
+  flask-app:
+    build: ./flask-app
+    container_name: flask-ubuntu-server
+    ports:
+      - "5000:5000"
+    volumes:
+      - flask-data:/app/data
+    networks:
+      - rede-flask-redis
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+
+  redis:
+    image: redis:alpine
+    container_name: redis-database
+    volumes:
+      - redis-data:/data
+    networks:
+      - rede-flask-redis
+
+  # Par 2: Backend Python (CentOS) + PostgreSQL
+  backend-centos:
+    build: ./flask-app/backend-centos
+    container_name: backend-centos-server
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend-data:/app/data
+    networks:
+      - rede-backend-postgres
+    depends_on:
+      - postgres
+    environment:
+      - DB_HOST=postgres
+      - DB_NAME=appdb
+      - DB_USER=admin
+      - DB_PASSWORD=senha123
+
+  postgres:
+    image: postgres:15
+    container_name: postgres-database
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - rede-backend-postgres
+    environment:
+      - POSTGRES_DB=appdb
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=senha123
+
+networks:
+  rede-flask-redis:
+    driver: bridge
+  rede-backend-postgres:
+    driver: bridge
+
+volumes:
+  flask-data:
+  redis-data:
+  backend-data:
+  postgres-data:
